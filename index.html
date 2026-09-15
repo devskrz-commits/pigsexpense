@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pig Capital & Expense Tracker</title>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-light: #e8f5e9;
+            --bg: #f4f6f8;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --border: #d0d7de;
+            --danger: #c62828;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 10px;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        header {
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin: 0 0 10px 0;
+            font-size: 24px;
+        }
+
+        .summary-card {
+            background-color: var(--primary-light);
+            border-left: 5px solid var(--primary);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .summary-row.total {
+            border-top: 1px solid #c8e6c9;
+            padding-top: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        .capital-inputs {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"], 
+        input[type="date"], 
+        input[type="number"] {
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 16px; /* Prevents auto-zoom on iOS */
+            box-sizing: border-box;
+            background-color: #fff;
+        }
+
+        .capital-inputs input.qty-input {
+            width: 45px;
+            text-align: center;
+        }
+
+        .capital-inputs input.price-input {
+            width: 75px;
+            text-align: right;
+        }
+
+        .section-title {
+            font-size: 18px;
+            color: var(--text);
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .expense-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .expense-table th {
+            background-color: #f0f4f1;
+            color: #444;
+            text-align: left;
+            padding: 8px 6px;
+            font-size: 13px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .expense-table td {
+            padding: 6px 4px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        .row-num {
+            font-weight: bold;
+            color: #777;
+            width: 25px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .expense-table input[type="date"] {
+            width: 100%;
+            padding: 6px 4px;
+            font-size: 13px;
+        }
+
+        .expense-table input[type="text"] {
+            width: 100%;
+            padding: 6px 8px;
+            font-size: 14px;
+        }
+
+        .expense-amount {
+            text-align: right;
+            width: 100%;
+            padding: 6px 4px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            flex: 1;
+            text-align: center;
+        }
+
+        .btn:active {
+            opacity: 0.8;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-danger {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            flex: 0 0 100%;
+            margin-top: 5px;
+        }
+
+        .status-msg {
+            font-size: 13px;
+            color: var(--primary);
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .grand-total-card {
+            background: #1b5e20;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .grand-total-card h2 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            font-weight: 400;
+        }
+
+        .grand-total-card .amount {
+            font-size: 26px;
+            font-weight: bold;
+        }
+
+        @media (min-width: 600px) {
+            body {
+                padding: 20px;
+            }
+            .container {
+                padding: 25px;
+            }
+            h1 {
+                font-size: 28px;
+            }
+            .summary-row {
+                font-size: 16px;
+            }
+            .btn-danger {
+                flex: initial;
+                margin-top: 0;
+                margin-left: auto;
+            }
+            .expense-table th, .expense-table td {
+                padding: 10px 8px;
+            }
+            .expense-table input[type="date"],
+            .expense-table input[type="text"],
+            .expense-amount {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Pig Capital</h1>
+        
+        <div class="summary-card">
+            <!-- Group 1 -->
+            <div class="summary-row">
+                <div class="capital-inputs">
+                    <input type="number" id="group1-qty" class="qty-input" value="7" min="0" oninput="onInputChange()">
+                    <span>heads @ ₱</span>
+                    <input type="number" id="group1-price" class="price-input" value="5000" min="0" step="100" oninput="onInputChange()">
+                </div>
+                <span id="group1-total">₱35,000.00</span>
+            </div>
+
+            <!-- Group 2 -->
+            <div class="summary-row">
+                <div class="capital-inputs">
+                    <input type="number" id="group2-qty" class="qty-input" value="5" min="0" oninput="onInputChange()">
+                    <span>heads @ ₱</span>
+                    <input type="number" id="group2-price" class="price-input" value="5500" min="0" step="100" oninput="onInputChange()">
+                </div>
+                <span id="group2-total">₱27,500.00</span>
+            </div>
+
+            <!-- Total Capital -->
+            <div class="summary-row total">
+                <span>Initial Capital:</span>
+                <span id="initial-capital">₱62,500.00</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="section-title">Weekly Food & Feed Expenses</div>
+    
+    <table class="expense-table">
+        <thead>
+            <tr>
+                <th style="width: 8%;">#</th>
+                <th style="width: 32%;">Date</th>
+                <th style="width: 35%;">Description</th>
+                <th style="width: 25%; text-align: right;">Amount (₱)</th>
+            </tr>
+        </thead>
+        <tbody id="expense-body">
+            <!-- Dynamic Rows -->
+        </tbody>
+    </table>
+
+    <div class="action-buttons">
+        <button class="btn" onclick="saveData(true)">💾 Save</button>
+        <button class="btn btn-outline" onclick="addExpenseRow()">+ Add Row</button>
+        <button class="btn btn-danger" onclick="resetData()">🗑️ Clear All Data</button>
+        <span id="status-msg" class="status-msg">Changes Saved Successfully!</span>
+    </div>
+
+    <div class="grand-total-card">
+        <h2>Total Overall Capital & Expenses</h2>
+        <div class="amount" id="grand-total">₱62,500.00</div>
+    </div>
+</div>
+
+<script>
+    let rowCount = 0;
+    let currentInitialCapital = 62500;
+
+    function formatCurrency(amount) {
+        return '₱' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function calculateInitialCapital() {
+        const g1Qty = parseFloat(document.getElementById('group1-qty').value) || 0;
+        const g1Price = parseFloat(document.getElementById('group1-price').value) || 0;
+        const g2Qty = parseFloat(document.getElementById('group2-qty').value) || 0;
+        const g2Price = parseFloat(document.getElementById('group2-price').value) || 0;
+
+        const g1Total = g1Qty * g1Price;
+        const g2Total = g2Qty * g2Price;
+
+        document.getElementById('group1-total').innerText = formatCurrency(g1Total);
+        document.getElementById('group2-total').innerText = formatCurrency(g2Total);
+
+        currentInitialCapital = g1Total + g2Total;
+        document.getElementById('initial-capital').innerText = formatCurrency(currentInitialCapital);
+    }
+
+    function createExpenseRow(dateVal = '', labelVal = '', amountVal = '') {
+        rowCount++;
+        const tr = document.createElement('tr');
+        tr.id = `row-${rowCount}`;
+        const defaultLabel = labelVal !== '' ? labelVal : `Week ${rowCount} Food`;
+
+        tr.innerHTML = `
+            <td class="row-num">${rowCount}</td>
+            <td><input type="date" id="date-${rowCount}" value="${dateVal}" onchange="onInputChange()"></td>
+            <td><input type="text" id="label-${rowCount}" value="${defaultLabel}" placeholder="Feed type" oninput="onInputChange()"></td>
+            <td><input type="number" id="amount-${rowCount}" class="expense-amount" value="${amountVal}" placeholder="0.00" min="0" step="any" oninput="onInputChange()"></td>
+        `;
+        return tr;
+    }
+
+    function onInputChange() {
+        calculateInitialCapital();
+        calculateGrandTotal();
+        saveData(false);
+    }
+
+    function addExpenseRow() {
+        const tbody = document.getElementById('expense-body');
+        tbody.appendChild(createExpenseRow());
+        calculateGrandTotal();
+        saveData(false);
+    }
+
+    function calculateGrandTotal() {
+        const inputs = document.querySelectorAll('.expense-amount');
+        let totalExpenses = 0;
+
+        inputs.forEach(input => {
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val > 0) {
+                totalExpenses += val;
+            }
+        });
+
+        const grandTotal = currentInitialCapital + totalExpenses;
+        document.getElementById('grand-total').innerText = formatCurrency(grandTotal);
+    }
+
+    function saveData(showNotification = false) {
+        const capitalData = {
+            g1Qty: document.getElementById('group1-qty').value,
+            g1Price: document.getElementById('group1-price').value,
+            g2Qty: document.getElementById('group2-qty').value,
+            g2Price: document.getElementById('group2-price').value
+        };
+        localStorage.setItem('pig_capital_data', JSON.stringify(capitalData));
+
+        const rowsData = [];
+        for (let i = 1; i <= rowCount; i++) {
+            const dateEl = document.getElementById(`date-${i}`);
+            const labelEl = document.getElementById(`label-${i}`);
+            const amountEl = document.getElementById(`amount-${i}`);
+
+            if (dateEl && labelEl && amountEl) {
+                rowsData.push({
+                    date: dateEl.value,
+                    label: labelEl.value,
+                    amount: amountEl.value
+                });
+            }
+        }
+        localStorage.setItem('pig_tracker_data', JSON.stringify(rowsData));
+
+        if (showNotification) {
+            const msg = document.getElementById('status-msg');
+            msg.style.opacity = '1';
+            setTimeout(() => { msg.style.opacity = '0'; }, 2000);
+        }
+    }
+
+    function loadData() {
+        const savedCapital = localStorage.getItem('pig_capital_data');
+        if (savedCapital) {
+            const cap = JSON.parse(savedCapital);
+            document.getElementById('group1-qty').value = cap.g1Qty;
+            document.getElementById('group1-price').value = cap.g1Price;
+            document.getElementById('group2-qty').value = cap.g2Qty;
+            document.getElementById('group2-price').value = cap.g2Price;
+        }
+
+        calculateInitialCapital();
+
+        const tbody = document.getElementById('expense-body');
+        tbody.innerHTML = '';
+        rowCount = 0;
+
+        const savedData = localStorage.getItem('pig_tracker_data');
+        if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            if (parsedData.length > 0) {
+                parsedData.forEach(item => {
+                    tbody.appendChild(createExpenseRow(item.date, item.label, item.amount));
+                });
+            } else {
+                initDefaultRows(tbody);
+            }
+        } else {
+            initDefaultRows(tbody);
+        }
+
+        calculateGrandTotal();
+    }
+
+    function initDefaultRows(tbody) {
+        for (let i = 1; i <= 10; i++) {
+            tbody.appendChild(createExpenseRow());
+        }
+    }
+
+    function resetData() {
+        if (confirm('Clear all data and reset to default?')) {
+            localStorage.removeItem('pig_tracker_data');
+            localStorage.removeItem('pig_capital_data');
+            document.getElementById('group1-qty').value = 7;
+            document.getElementById('group1-price').value = 5000;
+            document.getElementById('group2-qty').value = 5;
+            document.getElementById('group2-price').value = 5500;
+            loadData();
+        }
+    }
+
+    window.onload = loadData;
+</script>
+
+</body>
+</html>
