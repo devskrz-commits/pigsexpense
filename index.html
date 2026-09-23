@@ -178,6 +178,7 @@
             font-weight: 600;
             flex: 1;
             text-align: center;
+            min-width: 120px;
         }
 
         .btn:active {
@@ -311,6 +312,9 @@
     <div class="action-buttons">
         <button class="btn" onclick="saveData(true)">💾 Save</button>
         <button class="btn btn-outline" onclick="addExpenseRow()">+ Add Row</button>
+        <button class="btn btn-outline" onclick="exportData()">📤 Export Backup</button>
+        <button class="btn btn-outline" onclick="triggerImport()">📥 Import Backup</button>
+        <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importData(event)">
         <button class="btn btn-danger" onclick="resetData()">🗑️ Clear All Data</button>
         <span id="status-msg" class="status-msg">Changes Saved Successfully!</span>
     </div>
@@ -418,6 +422,43 @@
             msg.style.opacity = '1';
             setTimeout(() => { msg.style.opacity = '0'; }, 2000);
         }
+    }
+
+    function exportData() {
+        const backup = {
+            capital: localStorage.getItem('pig_capital_data'),
+            tracker: localStorage.getItem('pig_tracker_data')
+        };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `pig-tracker-backup-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function triggerImport() {
+        document.getElementById('import-file').click();
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const backup = JSON.parse(e.target.result);
+                if (backup.capital) localStorage.setItem('pig_capital_data', backup.capital);
+                if (backup.tracker) localStorage.setItem('pig_tracker_data', backup.tracker);
+                alert('Data restored successfully!');
+                loadData();
+            } catch (err) {
+                alert('Invalid backup file!');
+            }
+        };
+        reader.readAsText(file);
     }
 
     function loadData() {
