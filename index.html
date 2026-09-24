@@ -17,7 +17,6 @@
             --income-green: #00c853;
             --expense-red: #ff3b30;
             --border-light: #f0f2f5;
-            --base-font-size: 14px;
         }
 
         /* Dark Mode Theme Variables */
@@ -381,11 +380,53 @@
             font-weight: 700;
         }
 
-        /* Expense & Biller Lists */
+        /* Swipeable Transaction Card Wrapper */
         .transaction-list {
             display: flex;
             flex-direction: column;
             gap: 10px;
+        }
+
+        .swipe-wrapper {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        .swipe-actions {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            padding-right: 12px;
+            z-index: 1;
+        }
+
+        .swipe-btn {
+            border: none;
+            padding: 0 14px;
+            height: 100%;
+            color: white;
+            font-weight: 700;
+            font-size: 0.85em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border-radius: 12px;
+        }
+
+        .swipe-btn.edit {
+            background-color: #2196F3;
+        }
+
+        .swipe-btn.delete {
+            background-color: var(--expense-red);
         }
 
         .transaction-card {
@@ -397,7 +438,10 @@
             justify-content: space-between;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
             border: 1px solid var(--border-light);
-            transition: opacity 0.2s;
+            position: relative;
+            z-index: 2;
+            transition: transform 0.2s ease-out;
+            touch-action: pan-y;
         }
 
         .transaction-card.paid {
@@ -706,7 +750,7 @@
             <button class="icon-btn" onclick="exportWordDoc()" title="Convert to Word">📥</button>
         </div>
         <div class="balance-label">Total Capital & Expenses</div>
-        <div class="balance-amount" id="grand-total">₱62,500.00</div>
+        <div class="balance-amount" id="grand-total">₱130,970.00</div>
     </div>
 
     <!-- TAB 1: HOME DASHBOARD -->
@@ -719,7 +763,7 @@
             </div>
             <div class="stat-item right">
                 <div class="stat-title"><span class="text-red">↘</span> Expenses</div>
-                <div class="stat-value text-red" id="total-expenses-display">₱0.00</div>
+                <div class="stat-value text-red" id="total-expenses-display">₱68,470.00</div>
             </div>
         </div>
 
@@ -745,9 +789,10 @@
             </div>
         </div>
 
-        <!-- Category Tags -->
+        <!-- Category Filter Tags -->
         <div class="categories">
             <div class="tag active" onclick="filterCategory('All', this)">⚡ All</div>
+            <div class="tag" onclick="filterCategory('Food', this)">🍲 Food</div>
             <div class="tag" onclick="filterCategory('Feeds', this)">🌽 Feeds</div>
             <div class="tag" onclick="filterCategory('Medicine', this)">💊 Medicine</div>
             <div class="tag" onclick="filterCategory('Utilities', this)">💡 Utilities</div>
@@ -756,7 +801,7 @@
 
         <!-- Transactions Section -->
         <div class="section-header">
-            <span class="section-title">Latest Transactions</span>
+            <span class="section-title">Latest Transactions (Swipe Left to Edit/Delete)</span>
         </div>
 
         <div class="transaction-list" id="transaction-list">
@@ -853,7 +898,7 @@
     <!-- Floating Action Button -->
     <button class="fab" id="main-fab" onclick="openModal()">+</button>
 
-    <!-- Bottom Navigation Bar (Home, Download, Secret, Settings) -->
+    <!-- Bottom Navigation Bar -->
     <div class="bottom-nav">
         <button class="nav-item active" id="nav-home" onclick="switchTab('home')">🏠</button>
         <button class="nav-item" id="nav-download" onclick="exportWordDoc()">📥</button>
@@ -876,6 +921,7 @@
             <div class="form-control">
                 <label>Category</label>
                 <select id="modal-category">
+                    <option value="Food">🍲 Food</option>
                     <option value="Feeds">🌽 Feeds</option>
                     <option value="Medicine">💊 Medicine</option>
                     <option value="Utilities">💡 Utilities</option>
@@ -884,7 +930,7 @@
             </div>
             <div class="form-control">
                 <label>Description</label>
-                <input type="text" id="modal-label" placeholder="e.g. Starter Feeds Bag">
+                <input type="text" id="modal-label" placeholder="e.g. Starter Feeds Bag or Meals">
             </div>
             <div class="form-control">
                 <label>Amount</label>
@@ -894,7 +940,41 @@
         </div>
     </div>
 
-    <!-- Add Biller Modal (For Secret Tab) -->
+    <!-- Edit Expense Modal -->
+    <div class="modal" id="edit-expense-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Edit Expense</span>
+                <button class="icon-btn" style="color:#333; background:#eee;" onclick="closeEditModal()">✕</button>
+            </div>
+            <input type="hidden" id="edit-modal-id">
+            <div class="form-control">
+                <label>Date</label>
+                <input type="date" id="edit-modal-date">
+            </div>
+            <div class="form-control">
+                <label>Category</label>
+                <select id="edit-modal-category">
+                    <option value="Food">🍲 Food</option>
+                    <option value="Feeds">🌽 Feeds</option>
+                    <option value="Medicine">💊 Medicine</option>
+                    <option value="Utilities">💡 Utilities</option>
+                    <option value="Others">📦 Others</option>
+                </select>
+            </div>
+            <div class="form-control">
+                <label>Description</label>
+                <input type="text" id="edit-modal-label" placeholder="Description">
+            </div>
+            <div class="form-control">
+                <label>Amount</label>
+                <input type="number" id="edit-modal-amount" placeholder="0.00" step="any">
+            </div>
+            <button class="btn-submit" onclick="saveEditedExpense()">Update Expense</button>
+        </div>
+    </div>
+
+    <!-- Add Biller Modal -->
     <div class="modal" id="biller-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -937,19 +1017,40 @@
 </div>
 
 <script>
-    let expenses = [];
+    // Hardcoded default expenses pre-populated from your records
+    let expenses = [
+        { id: 1, date: '2026-05-15', category: 'Food', label: 'Food (kasama sa bayad sa biik)', amount: 6000 },
+        { id: 2, date: '2026-05-29', category: 'Food', label: 'Food (cash bago mag bday tito soyti)', amount: 6000 },
+        { id: 3, date: '2026-06-05', category: 'Food', label: 'Food (cash tito soyti)', amount: 6500 },
+        { id: 4, date: '2026-06-23', category: 'Food', label: 'Food GCASH Mama (sent via Maribank)', amount: 5700 },
+        { id: 5, date: '2026-07-05', category: 'Food', label: 'Food', amount: 3360 },
+        { id: 6, date: '2026-07-13', category: 'Food', label: 'Food (after notary) direct buy sakay sa trike', amount: 3290 },
+        { id: 7, date: '2026-07-13', category: 'Food', label: 'Abono mama (Food) Paid GCASH', amount: 5000 },
+        { id: 8, date: '2026-07-24', category: 'Food', label: 'Food after refund migs', amount: 3390 },
+        { id: 9, date: '2026-07-27', category: 'Food', label: 'Gcash bukid (bigas ninang)', amount: 2500 },
+        { id: 10, date: '2026-07-28', category: 'Food', label: 'Gcash balance', amount: 1000 },
+        { id: 11, date: '2026-08-03', category: 'Food', label: 'Pakain pig Gcash (Yana bday)', amount: 1840 },
+        { id: 12, date: '2026-08-03', category: 'Food', label: 'cash(Yana bday) (less to 4k cash)', amount: 1550 },
+        { id: 13, date: '2026-08-10', category: 'Food', label: 'Gcash pakain (Aug 8)', amount: 3390 },
+        { id: 14, date: '2026-08-28', category: 'Food', label: 'last uwi quezon 1 sack gcash', amount: 1700 },
+        { id: 15, date: '2026-08-31', category: 'Food', label: 'Gcash pakain (Aug last uwi quezon)', amount: 3450 },
+        { id: 16, date: '2026-09-04', category: 'Food', label: 'Maribank pakain pig', amount: 3600 },
+        { id: 17, date: '2026-09-09', category: 'Food', label: 'gcash mama number pakain pig', amount: 3300 },
+        { id: 18, date: '2026-09-15', category: 'Food', label: 'gcash mama number pakain pig last na daw', amount: 3600 },
+        { id: 19, date: '2026-09-18', category: 'Food', label: 'Pakain pig Gcash', amount: 3300 }
+    ];
+
     let billers = [];
     let activeFilter = 'All';
     let currentCurrency = '₱';
     let currentCycle = '10th';
     let isUnlocked = false;
 
-    // Date/Month Tracking Variable
-    let viewDate = new Date(); // Controls currently selected month view
-
+    let viewDate = new Date();
     const SECRET_PIN = "102595";
 
     const categoryIcons = {
+        'Food': '🍲',
         'Feeds': '🌽',
         'Medicine': '💊',
         'Utilities': '💡',
@@ -963,7 +1064,7 @@
     function getMonthKey(dateObj) {
         const year = dateObj.getFullYear();
         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-        return `${year}-${month}`; // Format: YYYY-MM
+        return `${year}-${month}`;
     }
 
     /* Passcode & Incognito Logic */
@@ -1014,360 +1115,49 @@
         } else if (tabName === 'settings') {
             document.getElementById('tab-settings').classList.add('active');
             document.getElementById('nav-settings').classList.add('active');
-            document.getElementById('main-fab').style.display = 'flex';
-            renderDeleteTabList();
+            document.getElementById('main-fab').style.display = 'none';
+            renderDeleteManager();
         }
     }
 
-    /* Month Navigation Controls */
-    function navigateMonth(direction) {
-        viewDate.setMonth(viewDate.getMonth() + direction);
-        ensureMonthBillersExist(viewDate);
-        renderBillers();
-    }
-
-    function updateMonthDisplay() {
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        document.getElementById('selected-month-display').innerText = `${monthNames[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
-    }
-
-    /* Auto-Rollover Logic for Monthly Billers */
-    function ensureMonthBillersExist(targetDate) {
-        const targetMonthKey = getMonthKey(targetDate);
-        const hasEntriesForTarget = billers.some(b => b.monthKey === targetMonthKey);
-
-        if (!hasEntriesForTarget) {
-            // Find all unique biller templates across history
-            const existingTemplates = new Map();
-            
-            // Sort by age so newer properties overwrite older ones
-            billers.forEach(b => {
-                const key = `${b.cycle}_${b.name.toLowerCase().trim()}`;
-                existingTemplates.set(key, { cycle: b.cycle, name: b.name, amount: b.amount });
-            });
-
-            // Recreate billers in the new month set to 'paid: false'
-            existingTemplates.forEach((template) => {
-                billers.push({
-                    id: Date.now() + Math.random(),
-                    monthKey: targetMonthKey,
-                    cycle: template.cycle,
-                    name: template.name,
-                    amount: template.amount,
-                    paid: false
-                });
-            });
-
-            saveBillerData();
-        }
-    }
-
-    /* Secret Billing Cycle Switcher */
-    function switchCycle(cycle) {
-        currentCycle = cycle;
-        document.getElementById('btn-cycle-10').classList.toggle('active', cycle === '10th');
-        document.getElementById('btn-cycle-25').classList.toggle('active', cycle === '25th');
-        document.getElementById('cycle-title').innerText = `${cycle} Expenses & Billers`;
-        renderBillers();
-    }
-
-    /* Biller Controls for Hidden Tab */
-    function renderBillers() {
-        updateMonthDisplay();
-        const currentMonthKey = getMonthKey(viewDate);
-        const container = document.getElementById('biller-list');
-        container.innerHTML = '';
-
-        const cycleBillers = billers.filter(b => b.monthKey === currentMonthKey && b.cycle === currentCycle);
-
-        let totalAmount = 0;
-        let paidCount = 0;
-
-        if (cycleBillers.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px; font-weight:600;">No ${currentCycle} billers found for this month.</div>`;
-        } else {
-            cycleBillers.forEach(biller => {
-                totalAmount += parseFloat(biller.amount) || 0;
-                if (biller.paid) paidCount++;
-
-                const card = document.createElement('div');
-                card.className = `transaction-card ${biller.paid ? 'paid' : ''}`;
-                card.innerHTML = `
-                    <div class="tx-left">
-                        <input type="checkbox" class="biller-checkbox" ${biller.paid ? 'checked' : ''} onchange="toggleBillerPaid(${biller.id})">
-                        <div class="tx-details">
-                            <span class="tx-title ${biller.paid ? 'strikethrough' : ''}">${biller.name}</span>
-                            <span class="tx-date">${currentCycle} Cycle • ${biller.paid ? 'PAID' : 'PENDING'}</span>
-                        </div>
-                    </div>
-                    <div class="tx-right">
-                        <span class="tx-amount">- ${formatCurrency(biller.amount)}</span>
-                        <button class="btn-delete-tx" onclick="deleteBiller(${biller.id})">🗑️</button>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        document.getElementById('secret-total-display').innerText = formatCurrency(totalAmount);
-        document.getElementById('secret-paid-display').innerText = `${paidCount} / ${cycleBillers.length}`;
-    }
-
-    function toggleBillerPaid(id) {
-        const item = billers.find(b => b.id === id);
-        if (item) {
-            item.paid = !item.paid;
-            saveBillerData();
-            renderBillers();
-        }
-    }
-
-    function deleteBiller(id) {
-        billers = billers.filter(b => b.id !== id);
-        saveBillerData();
-        renderBillers();
-    }
-
-    function openBillerModal() {
-        document.getElementById('modal-biller-cycle').value = currentCycle;
-        document.getElementById('modal-biller-name').value = '';
-        document.getElementById('modal-biller-amount').value = '';
-        document.getElementById('biller-modal').classList.add('open');
-    }
-
-    function closeBillerModal() {
-        document.getElementById('biller-modal').classList.remove('open');
-    }
-
-    function addBillerFromModal() {
-        const cycle = document.getElementById('modal-biller-cycle').value;
-        const name = document.getElementById('modal-biller-name').value;
-        const amount = document.getElementById('modal-biller-amount').value;
-        const currentMonthKey = getMonthKey(viewDate);
-
-        if (!name || !amount || amount <= 0) {
-            alert('Please fill out all fields with valid data.');
-            return;
-        }
-
-        billers.push({
-            id: Date.now(),
-            monthKey: currentMonthKey,
-            cycle,
-            name,
-            amount,
-            paid: false
-        });
-
-        saveBillerData();
-        closeBillerModal();
-        if (currentCycle !== cycle) switchCycle(cycle);
-        else renderBillers();
-    }
-
-    /* Settings & Auto-Save Logic */
-    function toggleTheme(isDark) {
-        if (isDark) {
-            document.body.classList.add('dark-mode');
-        } else {
-            document.body.classList.remove('dark-mode');
-        }
-        localStorage.setItem('pig_app_darkmode', isDark);
-    }
-
-    function changeFontSize(sizeClass) {
-        document.body.classList.remove('font-sm', 'font-md', 'font-lg');
-        document.body.classList.add(sizeClass);
-        localStorage.setItem('pig_app_fontsize', sizeClass);
-    }
-
-    function changeCurrency(symbol) {
-        currentCurrency = symbol;
-        localStorage.setItem('pig_app_currency', symbol);
-        render();
-        renderBillers();
-        renderDeleteTabList();
-    }
-
-    function manualSave() {
-        saveCapitalData();
-        saveExpenseData();
-        saveBillerData();
-        alert('All data successfully saved!');
-    }
-
-    /* Convert & Download as Word Printable File */
-    function exportWordDoc() {
-        const initialCapital = getInitialCapital();
-        const overallExpenses = expenses.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-        const grandTotal = initialCapital + overallExpenses;
-
-        let rowsHtml = '';
-        expenses.forEach((exp, i) => {
-            rowsHtml += `
-                <tr>
-                    <td style="border:1px solid #ccc; padding:8px;">${i + 1}</td>
-                    <td style="border:1px solid #ccc; padding:8px;">${exp.date || '-'}</td>
-                    <td style="border:1px solid #ccc; padding:8px;">${exp.category || 'General'}</td>
-                    <td style="border:1px solid #ccc; padding:8px;">${exp.label || '-'}</td>
-                    <td style="border:1px solid #ccc; padding:8px; text-align:right;">${formatCurrency(exp.amount)}</td>
-                </tr>
-            `;
-        });
-
-        const docContent = `
-            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-            <head><title>Pig Capital & Expense Report</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                h1 { color: #4a21cb; }
-                table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-                th { background: #6336e4; color: white; border: 1px solid #ccc; padding: 8px; text-align: left; }
-                .summary { background: #f0ebff; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-            </style>
-            </head>
-            <body>
-                <h1>Pig Capital & Expense Report</h1>
-                <p>Generated Date: ${new Date().toLocaleDateString()}</p>
-
-                <div class="summary">
-                    <p><strong>Initial Pig Capital:</strong> ${formatCurrency(initialCapital)}</p>
-                    <p><strong>Total Expenses:</strong> ${formatCurrency(overallExpenses)}</p>
-                    <p><strong>Grand Total Investment:</strong> ${formatCurrency(grandTotal)}</p>
-                </div>
-
-                <h2>Expense Details</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Date</th>
-                            <th>Category</th>
-                            <th>Description</th>
-                            <th style="text-align:right;">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rowsHtml || '<tr><td colspan="5" style="border:1px solid #ccc; padding:8px; text-align:center;">No expenses recorded</td></tr>'}
-                    </tbody>
-                </table>
-            </body>
-            </html>
-        `;
-
-        const blob = new Blob(['\ufeff' + docContent], { type: 'application/msword' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Pig_Expense_Report_${new Date().toISOString().slice(0,10)}.doc`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-    /* Capital Config */
+    /* Capital Calculation */
     function toggleCapitalSetup() {
         const body = document.getElementById('capital-body');
         const arrow = document.getElementById('capital-arrow');
         body.classList.toggle('open');
-        arrow.innerText = body.classList.contains('open') ? '▲' : '▼';
-    }
-
-    function getInitialCapital() {
-        const g1Qty = parseFloat(document.getElementById('g1-qty').value) || 0;
-        const g1Price = parseFloat(document.getElementById('g1-price').value) || 0;
-        const g2Qty = parseFloat(document.getElementById('g2-qty').value) || 0;
-        const g2Price = parseFloat(document.getElementById('g2-price').value) || 0;
-
-        const g1Total = g1Qty * g1Price;
-        const g2Total = g2Qty * g2Price;
-
-        document.getElementById('g1-total').innerText = formatCurrency(g1Total);
-        document.getElementById('g2-total').innerText = formatCurrency(g2Total);
-
-        return g1Total + g2Total;
+        arrow.textContent = body.classList.contains('open') ? '▲' : '▼';
     }
 
     function updateCapital() {
-        saveCapitalData();
-        render();
+        const qty1 = parseFloat(document.getElementById('g1-qty').value) || 0;
+        const price1 = parseFloat(document.getElementById('g1-price').value) || 0;
+        const total1 = qty1 * price1;
+
+        const qty2 = parseFloat(document.getElementById('g2-qty').value) || 0;
+        const price2 = parseFloat(document.getElementById('g2-price').value) || 0;
+        const total2 = qty2 * price2;
+
+        const grandCapital = total1 + total2;
+
+        document.getElementById('g1-total').textContent = formatCurrency(total1);
+        document.getElementById('g2-total').textContent = formatCurrency(total2);
+        document.getElementById('initial-capital-display').textContent = formatCurrency(grandCapital);
+
+        updateGrandTotal();
+        saveData();
     }
 
-    /* Dashboard Rendering */
-    function render() {
-        const initialCapital = getInitialCapital();
-        const listContainer = document.getElementById('transaction-list');
-        listContainer.innerHTML = '';
-
-        const filtered = activeFilter === 'All' ? expenses : expenses.filter(e => e.category === activeFilter);
-
-        filtered.forEach((exp) => {
-            const amount = parseFloat(exp.amount) || 0;
-            const icon = categoryIcons[exp.category] || '💸';
-            const card = document.createElement('div');
-            card.className = 'transaction-card';
-            card.innerHTML = `
-                <div class="tx-left">
-                    <div class="tx-icon">${icon}</div>
-                    <div class="tx-details">
-                        <span class="tx-title">${exp.label || 'Expense'}</span>
-                        <span class="tx-date">${exp.date || 'No Date'} • ${exp.category || 'General'}</span>
-                    </div>
-                </div>
-                <div class="tx-right">
-                    <span class="tx-amount">- ${formatCurrency(amount)}</span>
-                </div>
-            `;
-            listContainer.appendChild(card);
-        });
-
-        const overallExpenses = expenses.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-
-        document.getElementById('initial-capital-display').innerText = formatCurrency(initialCapital);
-        document.getElementById('total-expenses-display').innerText = formatCurrency(overallExpenses);
-        document.getElementById('grand-total').innerText = formatCurrency(initialCapital + overallExpenses);
+    function updateGrandTotal() {
+        const capital = parseFloat(document.getElementById('initial-capital-display').textContent.replace(/[^0-9.-]+/g,"")) || 0;
+        const totalExp = expenses.reduce((sum, item) => sum + Number(item.amount), 0);
+        
+        document.getElementById('total-expenses-display').textContent = formatCurrency(totalExp);
+        document.getElementById('grand-total').textContent = formatCurrency(capital + totalExp);
     }
 
-    /* Render Delete Expense Manager in Settings */
-    function renderDeleteTabList() {
-        const container = document.getElementById('delete-tab-list');
-        container.innerHTML = '';
-
-        if (expenses.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:0.9em; padding:10px;">No expenses available to delete.</div>';
-            return;
-        }
-
-        expenses.forEach(exp => {
-            const card = document.createElement('div');
-            card.className = 'transaction-card';
-            card.innerHTML = `
-                <div class="tx-left">
-                    <div class="tx-details">
-                        <span class="tx-title">${exp.label || 'Expense'}</span>
-                        <span class="tx-date">${exp.date} • ${exp.category}</span>
-                    </div>
-                </div>
-                <div class="tx-right">
-                    <span class="tx-amount">- ${formatCurrency(exp.amount)}</span>
-                    <button class="btn-delete-tx" onclick="deleteExpense(${exp.id})" title="Delete Expense">🗑️</button>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    }
-
-    function deleteExpense(id) {
-        expenses = expenses.filter(e => e.id !== id);
-        saveExpenseData();
-        render();
-        renderDeleteTabList();
-    }
-
-    /* Modal Controls */
+    /* Transactions & Modal Logic */
     function openModal() {
-        document.getElementById('modal-date').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('modal-date').valueAsDate = new Date();
         document.getElementById('modal-label').value = '';
         document.getElementById('modal-amount').value = '';
         document.getElementById('expense-modal').classList.add('open');
@@ -1380,110 +1170,398 @@
     function addExpenseFromModal() {
         const date = document.getElementById('modal-date').value;
         const category = document.getElementById('modal-category').value;
-        const label = document.getElementById('modal-label').value;
-        const amount = document.getElementById('modal-amount').value;
+        const label = document.getElementById('modal-label').value.trim();
+        const amount = parseFloat(document.getElementById('modal-amount').value);
 
-        if (!amount || amount <= 0) {
-            alert('Please enter a valid amount.');
+        if (!date || !label || isNaN(amount) || amount <= 0) {
+            alert('Please fill out all fields correctly.');
             return;
         }
 
-        expenses.unshift({
-            id: Date.now(),
-            date,
-            category,
-            label: label || `${category} Purchase`,
-            amount
+        expenses.unshift({ id: Date.now(), date, category, label, amount });
+        closeModal();
+        renderTransactions();
+        updateGrandTotal();
+        saveData();
+    }
+
+    /* Edit Expense Logic */
+    function openEditModal(id) {
+        const item = expenses.find(e => e.id === id);
+        if (!item) return;
+
+        document.getElementById('edit-modal-id').value = item.id;
+        document.getElementById('edit-modal-date').value = item.date;
+        document.getElementById('edit-modal-category').value = item.category;
+        document.getElementById('edit-modal-label').value = item.label;
+        document.getElementById('edit-modal-amount').value = item.amount;
+
+        document.getElementById('edit-expense-modal').classList.add('open');
+    }
+
+    function closeEditModal() {
+        document.getElementById('edit-expense-modal').classList.remove('open');
+    }
+
+    function saveEditedExpense() {
+        const id = parseInt(document.getElementById('edit-modal-id').value);
+        const date = document.getElementById('edit-modal-date').value;
+        const category = document.getElementById('edit-modal-category').value;
+        const label = document.getElementById('edit-modal-label').value.trim();
+        const amount = parseFloat(document.getElementById('edit-modal-amount').value);
+
+        if (!date || !label || isNaN(amount) || amount <= 0) {
+            alert('Please fill out all fields correctly.');
+            return;
+        }
+
+        const index = expenses.findIndex(e => e.id === id);
+        if (index !== -1) {
+            expenses[index] = { id, date, category, label, amount };
+        }
+
+        closeEditModal();
+        renderTransactions();
+        renderDeleteManager();
+        updateGrandTotal();
+        saveData();
+    }
+
+    function filterCategory(cat, element) {
+        activeFilter = cat;
+        document.querySelectorAll('.categories .tag').forEach(t => t.classList.remove('active'));
+        element.classList.add('active');
+        renderTransactions();
+    }
+
+    function renderTransactions() {
+        const listContainer = document.getElementById('transaction-list');
+        listContainer.innerHTML = '';
+
+        const filtered = activeFilter === 'All' ? expenses : expenses.filter(e => e.category === activeFilter);
+
+        if (filtered.length === 0) {
+            listContainer.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding: 20px;">No expenses recorded yet.</div>`;
+            return;
+        }
+
+        filtered.forEach(item => {
+            const icon = categoryIcons[item.category] || '📦';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'swipe-wrapper';
+
+            wrapper.innerHTML = `
+                <div class="swipe-actions">
+                    <button class="swipe-btn edit" onclick="openEditModal(${item.id})">✏️ Edit</button>
+                    <button class="swipe-btn delete" onclick="deleteExpense(${item.id})">🗑️ Delete</button>
+                </div>
+                <div class="transaction-card" id="card-${item.id}">
+                    <div class="tx-left">
+                        <div class="tx-icon">${icon}</div>
+                        <div class="tx-details">
+                            <span class="tx-title">${item.label}</span>
+                            <span class="tx-date">${item.date} • ${item.category}</span>
+                        </div>
+                    </div>
+                    <div class="tx-right">
+                        <span class="tx-amount">-${formatCurrency(item.amount)}</span>
+                    </div>
+                </div>
+            `;
+            listContainer.appendChild(wrapper);
+
+            // Attach touch swipe handlers for this card
+            attachSwipeHandlers(wrapper, item.id);
+        });
+    }
+
+    /* Swipe Gesture Handler */
+    function attachSwipeHandlers(wrapper, id) {
+        const card = wrapper.querySelector('.transaction-card');
+        let startX = 0;
+        let currentX = 0;
+        let isOpen = false;
+
+        card.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
         });
 
-        saveExpenseData();
-        render();
-        closeModal();
+        card.addEventListener('touchmove', (e) => {
+            currentX = e.touches[0].clientX;
+            let diff = currentX - startX;
+            if (diff < 0) {
+                // Swiping left
+                let translate = Math.max(diff, -150);
+                card.style.transform = `translateX(${translate}px)`;
+            } else if (isOpen && diff > 0) {
+                // Swiping right to close
+                let translate = Math.min(-150 + diff, 0);
+                card.style.transform = `translateX(${translate}px)`;
+            }
+        });
+
+        card.addEventListener('touchend', (e) => {
+            let diff = currentX - startX;
+            if (diff < -50) {
+                card.style.transform = `translateX(-150px)`;
+                isOpen = true;
+            } else {
+                card.style.transform = `translateX(0px)`;
+                isOpen = false;
+            }
+        });
     }
 
-    function filterCategory(cat, el) {
-        activeFilter = cat;
-        document.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
-        el.classList.add('active');
-        render();
+    /* Delete Manager */
+    function renderDeleteManager() {
+        const container = document.getElementById('delete-tab-list');
+        container.innerHTML = '';
+
+        if (expenses.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding: 10px;">No expenses to delete.</div>`;
+            return;
+        }
+
+        expenses.forEach(item => {
+            const icon = categoryIcons[item.category] || '📦';
+            const card = document.createElement('div');
+            card.className = 'transaction-card';
+            card.innerHTML = `
+                <div class="tx-left">
+                    <div class="tx-icon">${icon}</div>
+                    <div class="tx-details">
+                        <span class="tx-title">${item.label}</span>
+                        <span class="tx-date">${item.date} • ${formatCurrency(item.amount)}</span>
+                    </div>
+                </div>
+                <div class="tx-right">
+                    <button class="btn-delete-tx" onclick="deleteExpense(${item.id})">🗑️ Delete</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
     }
 
-    /* Local Storage Management */
-    function saveCapitalData() {
-        const capital = {
-            g1Qty: document.getElementById('g1-qty').value,
-            g1Price: document.getElementById('g1-price').value,
-            g2Qty: document.getElementById('g2-qty').value,
-            g2Price: document.getElementById('g2-price').value
-        };
-        localStorage.setItem('pig_mobile_capital', JSON.stringify(capital));
+    function deleteExpense(id) {
+        expenses = expenses.filter(e => e.id !== id);
+        renderTransactions();
+        renderDeleteManager();
+        updateGrandTotal();
+        saveData();
     }
 
-    function saveExpenseData() {
-        localStorage.setItem('pig_mobile_expenses', JSON.stringify(expenses));
+    /* Secret / Incognito Biller Logic */
+    function openBillerModal() {
+        document.getElementById('modal-biller-name').value = '';
+        document.getElementById('modal-biller-amount').value = '';
+        document.getElementById('biller-modal').classList.add('open');
     }
 
-    function saveBillerData() {
-        localStorage.setItem('pig_mobile_billers', JSON.stringify(billers));
+    function closeBillerModal() {
+        document.getElementById('biller-modal').classList.remove('open');
+    }
+
+    function addBillerFromModal() {
+        const cycle = document.getElementById('modal-biller-cycle').value;
+        const name = document.getElementById('modal-biller-name').value.trim();
+        const amount = parseFloat(document.getElementById('modal-biller-amount').value);
+        const monthKey = getMonthKey(viewDate);
+
+        if (!name || isNaN(amount) || amount <= 0) {
+            alert('Please enter valid biller details.');
+            return;
+        }
+
+        billers.push({ id: Date.now(), monthKey, cycle, name, amount, paid: false });
+        closeBillerModal();
+        renderBillers();
+        saveData();
+    }
+
+    function switchCycle(cycle) {
+        currentCycle = cycle;
+        document.getElementById('btn-cycle-10').classList.toggle('active', cycle === '10th');
+        document.getElementById('btn-cycle-25').classList.toggle('active', cycle === '25th');
+        document.getElementById('cycle-title').textContent = `${cycle} Expenses & Billers`;
+        renderBillers();
+    }
+
+    function navigateMonth(direction) {
+        viewDate.setMonth(viewDate.getMonth() + direction);
+        updateMonthDisplay();
+        renderBillers();
+    }
+
+    function updateMonthDisplay() {
+        const options = { month: 'long', year: 'numeric' };
+        document.getElementById('selected-month-display').textContent = viewDate.toLocaleDateString('en-US', options);
+    }
+
+    function toggleBillerPaid(id) {
+        const b = billers.find(item => item.id === id);
+        if (b) {
+            b.paid = !b.paid;
+            renderBillers();
+            saveData();
+        }
+    }
+
+    function deleteBiller(id) {
+        billers = billers.filter(b => b.id !== id);
+        renderBillers();
+        saveData();
+    }
+
+    function renderBillers() {
+        const container = document.getElementById('biller-list');
+        container.innerHTML = '';
+
+        const monthKey = getMonthKey(viewDate);
+        const currentBillers = billers.filter(b => b.monthKey === monthKey && b.cycle === currentCycle);
+
+        let totalCycleAmount = 0;
+        let paidCount = 0;
+
+        if (currentBillers.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding: 20px;">No billers added for this cycle.</div>`;
+        }
+
+        currentBillers.forEach(b => {
+            totalCycleAmount += Number(b.amount);
+            if (b.paid) paidCount++;
+
+            const card = document.createElement('div');
+            card.className = `transaction-card ${b.paid ? 'paid' : ''}`;
+            card.innerHTML = `
+                <div class="tx-left">
+                    <input type="checkbox" class="biller-checkbox" ${b.paid ? 'checked' : ''} onchange="toggleBillerPaid(${b.id})">
+                    <div class="tx-details">
+                        <span class="tx-title ${b.paid ? 'strikethrough' : ''}">${b.name}</span>
+                        <span class="tx-date">Cycle: ${b.cycle}</span>
+                    </div>
+                </div>
+                <div class="tx-right">
+                    <span class="tx-amount" style="color:var(--text-dark)">${formatCurrency(b.amount)}</span>
+                    <button class="btn-delete-tx" onclick="deleteBiller(${b.id})">✕</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        document.getElementById('secret-total-display').textContent = formatCurrency(totalCycleAmount);
+        document.getElementById('secret-paid-display').textContent = `${paidCount} / ${currentBillers.length}`;
+    }
+
+    /* Settings Logic */
+    function toggleTheme(isDark) {
+        document.body.classList.toggle('dark-mode', isDark);
+        localStorage.setItem('pig_theme', isDark ? 'dark' : 'light');
+    }
+
+    function changeFontSize(sizeClass) {
+        document.body.classList.remove('font-sm', 'font-md', 'font-lg');
+        document.body.classList.add(sizeClass);
+        localStorage.setItem('pig_font', sizeClass);
+    }
+
+    function changeCurrency(curr) {
+        currentCurrency = curr;
+        localStorage.setItem('pig_currency', curr);
+        updateCapital();
+        renderTransactions();
+        renderBillers();
+    }
+
+    /* Data Storage & Export */
+    function saveData() {
+        localStorage.setItem('pig_expenses', JSON.stringify(expenses));
+        localStorage.setItem('pig_billers', JSON.stringify(billers));
+        localStorage.setItem('pig_capital_g1_qty', document.getElementById('g1-qty').value);
+        localStorage.setItem('pig_capital_g1_price', document.getElementById('g1-price').value);
+        localStorage.setItem('pig_capital_g2_qty', document.getElementById('g2-qty').value);
+        localStorage.setItem('pig_capital_g2_price', document.getElementById('g2-price').value);
+    }
+
+    function manualSave() {
+        saveData();
+        alert('Data saved successfully!');
     }
 
     function loadData() {
-        // Load Settings
-        const isDark = localStorage.getItem('pig_app_darkmode') === 'true';
-        document.getElementById('theme-toggle').checked = isDark;
-        toggleTheme(isDark);
-
-        const savedFontSize = localStorage.getItem('pig_app_fontsize') || 'font-md';
-        document.getElementById('font-select').value = savedFontSize;
-        changeFontSize(savedFontSize);
-
-        const savedCurrency = localStorage.getItem('pig_app_currency') || '₱';
-        document.getElementById('currency-select').value = savedCurrency;
-        currentCurrency = savedCurrency;
-
-        // Load Capital Setup
-        const capData = localStorage.getItem('pig_mobile_capital');
-        if (capData) {
-            const cap = JSON.parse(capData);
-            document.getElementById('g1-qty').value = cap.g1Qty;
-            document.getElementById('g1-price').value = cap.g1Price;
-            document.getElementById('g2-qty').value = cap.g2Qty;
-            document.getElementById('g2-price').value = cap.g2Price;
+        const savedExpenses = localStorage.getItem('pig_expenses');
+        if (savedExpenses) {
+            const parsed = JSON.parse(savedExpenses);
+            if (parsed.length > 0) {
+                expenses = parsed;
+            }
         }
 
-        // Load Expense List
-        const expData = localStorage.getItem('pig_mobile_expenses');
-        if (expData) {
-            expenses = JSON.parse(expData);
-        } else {
-            expenses = [
-                { id: 1, date: new Date().toISOString().slice(0,10), category: 'Feeds', label: 'Starter Feeds 1 Bag', amount: '1850' },
-                { id: 2, date: new Date().toISOString().slice(0,10), category: 'Medicine', label: 'Vitamins & Iron Injections', amount: '650' }
-            ];
-            saveExpenseData();
+        const savedBillers = localStorage.getItem('pig_billers');
+        if (savedBillers) billers = JSON.parse(savedBillers);
+
+        const g1q = localStorage.getItem('pig_capital_g1_qty');
+        const g1p = localStorage.getItem('pig_capital_g1_price');
+        const g2q = localStorage.getItem('pig_capital_g2_qty');
+        const g2p = localStorage.getItem('pig_capital_g2_price');
+
+        if (g1q !== null) document.getElementById('g1-qty').value = g1q;
+        if (g1p !== null) document.getElementById('g1-price').value = g1p;
+        if (g2q !== null) document.getElementById('g2-qty').value = g2q;
+        if (g2p !== null) document.getElementById('g2-price').value = g2p;
+
+        const savedTheme = localStorage.getItem('pig_theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('theme-toggle').checked = true;
         }
 
-        // Load Secret Billers List
-        const billerData = localStorage.getItem('pig_mobile_billers');
-        if (billerData) {
-            billers = JSON.parse(billerData);
-        } else {
-            const currentMonthKey = getMonthKey(viewDate);
-            billers = [
-                { id: 101, monthKey: currentMonthKey, cycle: '10th', name: 'Electricity Bill', amount: '3500', paid: false },
-                { id: 102, monthKey: currentMonthKey, cycle: '25th', name: 'Wi-Fi / Fiber Internet', amount: '1699', paid: true }
-            ];
-            saveBillerData();
+        const savedFont = localStorage.getItem('pig_font');
+        if (savedFont) {
+            document.body.classList.remove('font-sm', 'font-md', 'font-lg');
+            document.body.classList.add(savedFont);
+            document.getElementById('font-select').value = savedFont;
         }
 
-        // Check and generate entries for current month
-        ensureMonthBillersExist(viewDate);
+        const savedCurr = localStorage.getItem('pig_currency');
+        if (savedCurr) {
+            currentCurrency = savedCurr;
+            document.getElementById('currency-select').value = savedCurr;
+        }
 
-        render();
+        updateMonthDisplay();
+        updateCapital();
+        renderTransactions();
+        renderBillers();
+        renderDeleteManager();
     }
 
-    window.onload = loadData;
-</script>
+    function exportWordDoc() {
+        let htmlContent = `<html><head><meta charset='utf-8'><title>Pig Capital Expense Report</title></head><body>`;
+        htmlContent += `<h2>Pig Capital & Expense Report</h2>`;
+        htmlContent += `<p><strong>Grand Total:</strong> ${document.getElementById('grand-total').innerText}</p>`;
+        htmlContent += `<p><strong>Initial Capital:</strong> ${document.getElementById('initial-capital-display').innerText}</p>`;
+        htmlContent += `<p><strong>Total Expenses:</strong> ${document.getElementById('total-expenses-display').innerText}</p>`;
+        htmlContent += `<h3>Transactions</h3><table border="1" cellpadding="5" cellspacing="0"><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th></tr>`;
+        expenses.forEach(tx => {
+            htmlContent += `<tr><td>${tx.date}</td><td>${tx.category}</td><td>${tx.label}</td><td>${formatCurrency(tx.amount)}</td></tr>`;
+        });
+        htmlContent += `</table></body></html>`;
 
+        const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Pig_Capital_Expense_Report_${new Date().toISOString().slice(0,10)}.doc`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // Initialize App on Load
+    window.onload = function() {
+        loadData();
+    };
+</script>
 </body>
 </html>
