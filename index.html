@@ -91,10 +91,35 @@
             margin-bottom: 16px;
         }
 
+        .greeting-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .greeting {
-            font-size: 1.4em;
+            font-size: 1.3em;
             font-weight: 700;
             margin: 0;
+        }
+
+        .secret-trigger {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .secret-trigger:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .icon-btn {
@@ -280,7 +305,69 @@
             border-color: var(--accent-purple);
         }
 
-        /* Transactions List Header */
+        /* Month Navigation Bar for Hidden Tab */
+        .month-picker-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 10px 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-light);
+        }
+
+        .month-picker-btn {
+            background: none;
+            border: none;
+            font-size: 1.1em;
+            cursor: pointer;
+            color: var(--accent-purple);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-weight: 800;
+        }
+
+        .month-picker-btn:hover {
+            background: rgba(112, 66, 248, 0.1);
+        }
+
+        .month-display {
+            font-weight: 800;
+            font-size: 0.95em;
+            color: var(--text-dark);
+        }
+
+        /* Sub-tab Switchers for Secret Tab */
+        .cycle-tabs {
+            display: flex;
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 4px;
+            border: 1px solid var(--border-light);
+            margin-bottom: 16px;
+        }
+
+        .cycle-tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 0.9em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .cycle-tab-btn.active {
+            background: var(--accent-purple);
+            color: white;
+        }
+
+        /* Section Header */
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -294,7 +381,7 @@
             font-weight: 700;
         }
 
-        /* Expense Row Item */
+        /* Expense & Biller Lists */
         .transaction-list {
             display: flex;
             flex-direction: column;
@@ -310,6 +397,11 @@
             justify-content: space-between;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
             border: 1px solid var(--border-light);
+            transition: opacity 0.2s;
+        }
+
+        .transaction-card.paid {
+            opacity: 0.6;
         }
 
         .tx-left {
@@ -341,6 +433,11 @@
             font-weight: 700;
         }
 
+        .tx-title.strikethrough {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
         .tx-date {
             font-size: 0.75em;
             color: var(--text-muted);
@@ -351,7 +448,7 @@
             text-align: right;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         .tx-amount {
@@ -368,6 +465,14 @@
             font-size: 1em;
             padding: 6px;
             border-radius: 8px;
+        }
+
+        /* Checkbox Customization for Billers */
+        .biller-checkbox {
+            width: 22px;
+            height: 22px;
+            accent-color: var(--accent-purple);
+            cursor: pointer;
         }
 
         /* Settings UI Components */
@@ -504,7 +609,11 @@
             color: var(--accent-purple);
         }
 
-        /* Add Expense Modal */
+        .nav-item.secret-nav {
+            display: none;
+        }
+
+        /* Modals */
         .modal {
             display: none;
             position: absolute;
@@ -575,6 +684,13 @@
             cursor: pointer;
             margin-top: 8px;
         }
+
+        /* Passcode Pin Display */
+        .pin-input {
+            text-align: center;
+            letter-spacing: 12px;
+            font-size: 1.5em !important;
+        }
     </style>
 </head>
 <body class="font-md">
@@ -583,7 +699,10 @@
     <!-- Header Hero Section -->
     <div class="header">
         <div class="header-top">
-            <h1 class="greeting">Pig Capital Tracker</h1>
+            <div class="greeting-wrap">
+                <h1 class="greeting">Pig Capital Tracker</h1>
+                <button class="secret-trigger" onclick="requestPasscode()" title="Private Mode">🔐</button>
+            </div>
             <button class="icon-btn" onclick="exportWordDoc()" title="Convert to Word">📥</button>
         </div>
         <div class="balance-label">Total Capital & Expenses</div>
@@ -645,7 +764,44 @@
         </div>
     </div>
 
-    <!-- TAB 2: SETTINGS -->
+    <!-- TAB 2: SECRET / INCOGNITO BILLERS TAB -->
+    <div class="tab-content" id="tab-secret">
+        <!-- Month Navigation Picker -->
+        <div class="month-picker-bar">
+            <button class="month-picker-btn" onclick="navigateMonth(-1)">❮</button>
+            <span class="month-display" id="selected-month-display">September 2026</span>
+            <button class="month-picker-btn" onclick="navigateMonth(1)">❯</button>
+        </div>
+
+        <!-- Private Stats Summary Card -->
+        <div class="stat-card">
+            <div class="stat-item">
+                <div class="stat-title"><span class="text-red"> Total Cycle Bills</span></div>
+                <div class="stat-value text-red" id="secret-total-display">₱0.00</div>
+            </div>
+            <div class="stat-item right">
+                <div class="stat-title"><span class="text-green"> Paid Progress</span></div>
+                <div class="stat-value text-green" id="secret-paid-display">0 / 0</div>
+            </div>
+        </div>
+
+        <!-- 10th vs 25th Sub-tabs Switcher -->
+        <div class="cycle-tabs">
+            <button class="cycle-tab-btn active" id="btn-cycle-10" onclick="switchCycle('10th')">📅 10th Cycle</button>
+            <button class="cycle-tab-btn" id="btn-cycle-25" onclick="switchCycle('25th')">📅 25th Cycle</button>
+        </div>
+
+        <div class="section-header">
+            <span class="section-title" id="cycle-title">10th Expenses & Billers</span>
+            <button class="tag" style="background:var(--accent-purple); color:white;" onclick="openBillerModal()">+ Add Biller</button>
+        </div>
+
+        <div class="transaction-list" id="biller-list">
+            <!-- Dynamic Biller Items -->
+        </div>
+    </div>
+
+    <!-- TAB 3: SETTINGS -->
     <div class="tab-content" id="tab-settings">
         <div class="section-header">
             <span class="section-title">App Settings</span>
@@ -695,13 +851,14 @@
     </div>
 
     <!-- Floating Action Button -->
-    <button class="fab" onclick="openModal()">+</button>
+    <button class="fab" id="main-fab" onclick="openModal()">+</button>
 
-    <!-- Bottom Navigation Bar (Home, Download, Settings) -->
+    <!-- Bottom Navigation Bar (Home, Download, Secret, Settings) -->
     <div class="bottom-nav">
         <button class="nav-item active" id="nav-home" onclick="switchTab('home')">🏠</button>
         <button class="nav-item" id="nav-download" onclick="exportWordDoc()">📥</button>
         <div style="width: 40px;"></div> <!-- Spacer for FAB -->
+        <button class="nav-item secret-nav" id="nav-secret" onclick="switchTab('secret')" title="Private Expenses">🔒</button>
         <button class="nav-item" id="nav-settings" onclick="switchTab('settings')">⚙️</button>
     </div>
 
@@ -736,12 +893,61 @@
             <button class="btn-submit" onclick="addExpenseFromModal()">Save Expense</button>
         </div>
     </div>
+
+    <!-- Add Biller Modal (For Secret Tab) -->
+    <div class="modal" id="biller-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Add Recurring Biller</span>
+                <button class="icon-btn" style="color:#333; background:#eee;" onclick="closeBillerModal()">✕</button>
+            </div>
+            <div class="form-control">
+                <label>Billing Cycle Target</label>
+                <select id="modal-biller-cycle">
+                    <option value="10th">10th Cycle</option>
+                    <option value="25th">25th Cycle</option>
+                </select>
+            </div>
+            <div class="form-control">
+                <label>Biller / Bill Name</label>
+                <input type="text" id="modal-biller-name" placeholder="e.g. Internet Bill, Credit Card">
+            </div>
+            <div class="form-control">
+                <label>Amount Due</label>
+                <input type="number" id="modal-biller-amount" placeholder="0.00" step="any">
+            </div>
+            <button class="btn-submit" onclick="addBillerFromModal()">Save Biller</button>
+        </div>
+    </div>
+
+    <!-- Passcode Modal -->
+    <div class="modal" id="passcode-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">🔒 Private Access</span>
+                <button class="icon-btn" style="color:#333; background:#eee;" onclick="closePasscodeModal()">✕</button>
+            </div>
+            <div class="form-control">
+                <label>Enter Passcode</label>
+                <input type="password" id="passcode-input" class="pin-input" maxlength="6" placeholder="******">
+            </div>
+            <button class="btn-submit" onclick="verifyPasscode()">Unlock Incognito Tab</button>
+        </div>
+    </div>
 </div>
 
 <script>
     let expenses = [];
+    let billers = [];
     let activeFilter = 'All';
     let currentCurrency = '₱';
+    let currentCycle = '10th';
+    let isUnlocked = false;
+
+    // Date/Month Tracking Variable
+    let viewDate = new Date(); // Controls currently selected month view
+
+    const SECRET_PIN = "102595";
 
     const categoryIcons = {
         'Feeds': '🌽',
@@ -754,19 +960,209 @@
         return currentCurrency + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    function getMonthKey(dateObj) {
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        return `${year}-${month}`; // Format: YYYY-MM
+    }
+
+    /* Passcode & Incognito Logic */
+    function requestPasscode() {
+        if (isUnlocked) {
+            switchTab('secret');
+            return;
+        }
+        document.getElementById('passcode-input').value = '';
+        document.getElementById('passcode-modal').classList.add('open');
+    }
+
+    function closePasscodeModal() {
+        document.getElementById('passcode-modal').classList.remove('open');
+    }
+
+    function verifyPasscode() {
+        const pin = document.getElementById('passcode-input').value;
+        if (pin === SECRET_PIN) {
+            isUnlocked = true;
+            document.getElementById('nav-secret').style.display = 'flex';
+            closePasscodeModal();
+            switchTab('secret');
+        } else {
+            alert('Incorrect PIN Code. Access Denied.');
+        }
+    }
+
     /* Tab Switching Logic */
     function switchTab(tabName) {
+        if (tabName === 'secret' && !isUnlocked) {
+            requestPasscode();
+            return;
+        }
+
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
         if (tabName === 'home') {
             document.getElementById('tab-home').classList.add('active');
             document.getElementById('nav-home').classList.add('active');
+            document.getElementById('main-fab').style.display = 'flex';
+        } else if (tabName === 'secret') {
+            document.getElementById('tab-secret').classList.add('active');
+            document.getElementById('nav-secret').classList.add('active');
+            document.getElementById('main-fab').style.display = 'none';
+            renderBillers();
         } else if (tabName === 'settings') {
             document.getElementById('tab-settings').classList.add('active');
             document.getElementById('nav-settings').classList.add('active');
+            document.getElementById('main-fab').style.display = 'flex';
             renderDeleteTabList();
         }
+    }
+
+    /* Month Navigation Controls */
+    function navigateMonth(direction) {
+        viewDate.setMonth(viewDate.getMonth() + direction);
+        ensureMonthBillersExist(viewDate);
+        renderBillers();
+    }
+
+    function updateMonthDisplay() {
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        document.getElementById('selected-month-display').innerText = `${monthNames[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+    }
+
+    /* Auto-Rollover Logic for Monthly Billers */
+    function ensureMonthBillersExist(targetDate) {
+        const targetMonthKey = getMonthKey(targetDate);
+        const hasEntriesForTarget = billers.some(b => b.monthKey === targetMonthKey);
+
+        if (!hasEntriesForTarget) {
+            // Find all unique biller templates across history
+            const existingTemplates = new Map();
+            
+            // Sort by age so newer properties overwrite older ones
+            billers.forEach(b => {
+                const key = `${b.cycle}_${b.name.toLowerCase().trim()}`;
+                existingTemplates.set(key, { cycle: b.cycle, name: b.name, amount: b.amount });
+            });
+
+            // Recreate billers in the new month set to 'paid: false'
+            existingTemplates.forEach((template) => {
+                billers.push({
+                    id: Date.now() + Math.random(),
+                    monthKey: targetMonthKey,
+                    cycle: template.cycle,
+                    name: template.name,
+                    amount: template.amount,
+                    paid: false
+                });
+            });
+
+            saveBillerData();
+        }
+    }
+
+    /* Secret Billing Cycle Switcher */
+    function switchCycle(cycle) {
+        currentCycle = cycle;
+        document.getElementById('btn-cycle-10').classList.toggle('active', cycle === '10th');
+        document.getElementById('btn-cycle-25').classList.toggle('active', cycle === '25th');
+        document.getElementById('cycle-title').innerText = `${cycle} Expenses & Billers`;
+        renderBillers();
+    }
+
+    /* Biller Controls for Hidden Tab */
+    function renderBillers() {
+        updateMonthDisplay();
+        const currentMonthKey = getMonthKey(viewDate);
+        const container = document.getElementById('biller-list');
+        container.innerHTML = '';
+
+        const cycleBillers = billers.filter(b => b.monthKey === currentMonthKey && b.cycle === currentCycle);
+
+        let totalAmount = 0;
+        let paidCount = 0;
+
+        if (cycleBillers.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px; font-weight:600;">No ${currentCycle} billers found for this month.</div>`;
+        } else {
+            cycleBillers.forEach(biller => {
+                totalAmount += parseFloat(biller.amount) || 0;
+                if (biller.paid) paidCount++;
+
+                const card = document.createElement('div');
+                card.className = `transaction-card ${biller.paid ? 'paid' : ''}`;
+                card.innerHTML = `
+                    <div class="tx-left">
+                        <input type="checkbox" class="biller-checkbox" ${biller.paid ? 'checked' : ''} onchange="toggleBillerPaid(${biller.id})">
+                        <div class="tx-details">
+                            <span class="tx-title ${biller.paid ? 'strikethrough' : ''}">${biller.name}</span>
+                            <span class="tx-date">${currentCycle} Cycle • ${biller.paid ? 'PAID' : 'PENDING'}</span>
+                        </div>
+                    </div>
+                    <div class="tx-right">
+                        <span class="tx-amount">- ${formatCurrency(biller.amount)}</span>
+                        <button class="btn-delete-tx" onclick="deleteBiller(${biller.id})">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        document.getElementById('secret-total-display').innerText = formatCurrency(totalAmount);
+        document.getElementById('secret-paid-display').innerText = `${paidCount} / ${cycleBillers.length}`;
+    }
+
+    function toggleBillerPaid(id) {
+        const item = billers.find(b => b.id === id);
+        if (item) {
+            item.paid = !item.paid;
+            saveBillerData();
+            renderBillers();
+        }
+    }
+
+    function deleteBiller(id) {
+        billers = billers.filter(b => b.id !== id);
+        saveBillerData();
+        renderBillers();
+    }
+
+    function openBillerModal() {
+        document.getElementById('modal-biller-cycle').value = currentCycle;
+        document.getElementById('modal-biller-name').value = '';
+        document.getElementById('modal-biller-amount').value = '';
+        document.getElementById('biller-modal').classList.add('open');
+    }
+
+    function closeBillerModal() {
+        document.getElementById('biller-modal').classList.remove('open');
+    }
+
+    function addBillerFromModal() {
+        const cycle = document.getElementById('modal-biller-cycle').value;
+        const name = document.getElementById('modal-biller-name').value;
+        const amount = document.getElementById('modal-biller-amount').value;
+        const currentMonthKey = getMonthKey(viewDate);
+
+        if (!name || !amount || amount <= 0) {
+            alert('Please fill out all fields with valid data.');
+            return;
+        }
+
+        billers.push({
+            id: Date.now(),
+            monthKey: currentMonthKey,
+            cycle,
+            name,
+            amount,
+            paid: false
+        });
+
+        saveBillerData();
+        closeBillerModal();
+        if (currentCycle !== cycle) switchCycle(cycle);
+        else renderBillers();
     }
 
     /* Settings & Auto-Save Logic */
@@ -789,12 +1185,14 @@
         currentCurrency = symbol;
         localStorage.setItem('pig_app_currency', symbol);
         render();
+        renderBillers();
         renderDeleteTabList();
     }
 
     function manualSave() {
         saveCapitalData();
         saveExpenseData();
+        saveBillerData();
         alert('All data successfully saved!');
     }
 
@@ -1025,6 +1423,10 @@
         localStorage.setItem('pig_mobile_expenses', JSON.stringify(expenses));
     }
 
+    function saveBillerData() {
+        localStorage.setItem('pig_mobile_billers', JSON.stringify(billers));
+    }
+
     function loadData() {
         // Load Settings
         const isDark = localStorage.getItem('pig_app_darkmode') === 'true';
@@ -1060,6 +1462,23 @@
             ];
             saveExpenseData();
         }
+
+        // Load Secret Billers List
+        const billerData = localStorage.getItem('pig_mobile_billers');
+        if (billerData) {
+            billers = JSON.parse(billerData);
+        } else {
+            const currentMonthKey = getMonthKey(viewDate);
+            billers = [
+                { id: 101, monthKey: currentMonthKey, cycle: '10th', name: 'Electricity Bill', amount: '3500', paid: false },
+                { id: 102, monthKey: currentMonthKey, cycle: '25th', name: 'Wi-Fi / Fiber Internet', amount: '1699', paid: true }
+            ];
+            saveBillerData();
+        }
+
+        // Check and generate entries for current month
+        ensureMonthBillersExist(viewDate);
+
         render();
     }
 
