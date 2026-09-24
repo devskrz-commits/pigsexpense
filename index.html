@@ -3,513 +3,1064 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pig Capital & Expense Tracker</title>
+    <title>Pig Capital Expense Tracker</title>
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #2e7d32;
-            --primary-light: #e8f5e9;
-            --bg: #f4f6f8;
+            --primary-gradient: linear-gradient(135deg, #6336e4 0%, #4a21cb 50%, #3010a3 100%);
+            --accent-purple: #7042f8;
+            --bg-color: #f1f3f9;
             --card-bg: #ffffff;
-            --text: #333333;
-            --border: #d0d7de;
-            --danger: #c62828;
+            --text-dark: #121417;
+            --text-muted: #88909e;
+            --income-green: #00c853;
+            --expense-red: #ff3b30;
+            --border-light: #f0f2f5;
+            --base-font-size: 14px;
+        }
+
+        /* Dark Mode Theme Variables */
+        body.dark-mode {
+            --bg-color: #0f1117;
+            --card-bg: #1e2029;
+            --text-dark: #f1f3f9;
+            --text-muted: #a0a7b5;
+            --border-light: #2a2d3d;
+        }
+
+        /* Font Size Options */
+        body.font-sm { font-size: 12px; }
+        body.font-md { font-size: 14px; }
+        body.font-lg { font-size: 16px; }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+            background-color: #d8deeb;
+            color: var(--text-dark);
             margin: 0;
-            padding: 10px;
-            -webkit-text-size-adjust: 100%;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        /* Mobile Container Frame */
+        .app-container {
+            width: 100%;
+            max-width: 414px;
+            height: 100vh;
+            max-height: 896px;
+            background-color: var(--bg-color);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            transition: background-color 0.3s ease;
         }
 
-        header {
-            border-bottom: 2px solid var(--primary-light);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
+        @media (min-width: 420px) {
+            .app-container {
+                border-radius: 36px;
+                height: 844px;
+                margin: 20px 0;
+            }
         }
 
-        h1 {
-            color: var(--primary);
-            margin: 0 0 10px 0;
-            font-size: 24px;
+        /* Hero Header */
+        .header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 30px 20px 45px 20px;
+            position: relative;
+            z-index: 1;
+            flex-shrink: 0;
         }
 
-        .summary-card {
-            background-color: var(--primary-light);
-            border-left: 5px solid var(--primary);
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-        }
-
-        .summary-row {
+        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
-            font-size: 14px;
+            margin-bottom: 16px;
         }
 
-        .summary-row.total {
-            border-top: 1px solid #c8e6c9;
-            padding-top: 8px;
-            font-weight: bold;
-            font-size: 16px;
-            color: var(--primary);
+        .greeting {
+            font-size: 1.4em;
+            font-weight: 700;
+            margin: 0;
         }
 
-        .capital-inputs {
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.18);
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            font-size: 1.1em;
+        }
+
+        .balance-label {
+            font-size: 0.8em;
+            color: rgba(255, 255, 255, 0.75);
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+        }
+
+        .balance-amount {
+            font-size: 2em;
+            font-weight: 800;
+            text-align: center;
+            margin: 4px 0 0 0;
+        }
+
+        /* Tab Panels */
+        .tab-content {
+            display: none;
+            flex: 1;
+            margin-top: -20px;
+            background: var(--bg-color);
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+            padding: 20px 20px 90px 20px;
+            overflow-y: auto;
+            scrollbar-width: none;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tab-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Overview Stat Card */
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            margin-bottom: 16px;
+            border: 1px solid var(--border-light);
+            position: relative;
+            z-index: 3;
+        }
+
+        .stat-item {
+            flex: 1;
+        }
+
+        .stat-item.right {
+            text-align: right;
+            border-left: 1px solid var(--border-light);
+            padding-left: 15px;
+        }
+
+        .stat-title {
+            font-size: 0.85em;
+            color: var(--text-muted);
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 4px;
-            flex-wrap: wrap;
         }
 
-        input[type="text"], 
-        input[type="date"], 
-        input[type="number"] {
-            padding: 8px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 16px; /* Prevents auto-zoom on iOS */
-            box-sizing: border-box;
-            background-color: #fff;
+        .stat-item.right .stat-title {
+            justify-content: flex-end;
         }
 
-        .capital-inputs input.qty-input {
-            width: 45px;
-            text-align: center;
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-top: 4px;
         }
 
-        .capital-inputs input.price-input {
-            width: 75px;
-            text-align: right;
+        .text-green { color: var(--income-green); }
+        .text-red { color: var(--expense-red); }
+
+        /* Capital Setup Accordion */
+        .capital-card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.02);
+            border: 1px solid var(--border-light);
+        }
+
+        .capital-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.95em;
+        }
+
+        .capital-body {
+            display: none;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .capital-body.open {
+            display: block;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .input-group input {
+            border: 1px solid var(--border-light);
+            background: var(--bg-color);
+            color: var(--text-dark);
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .input-qty { width: 55px; text-align: center; }
+        .input-price { width: 85px; text-align: right; }
+
+        /* Category Filter Tags */
+        .categories {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+            scrollbar-width: none;
+        }
+
+        .categories::-webkit-scrollbar { display: none; }
+
+        .tag {
+            background: var(--card-bg);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: var(--accent-purple);
+            white-space: nowrap;
+            border: 1px solid var(--border-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tag.active {
+            background: var(--accent-purple);
+            color: white;
+            border-color: var(--accent-purple);
+        }
+
+        /* Transactions List Header */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            margin-top: 15px;
         }
 
         .section-title {
-            font-size: 18px;
-            color: var(--text);
-            margin-top: 20px;
-            margin-bottom: 10px;
+            font-size: 1.1em;
+            font-weight: 700;
+        }
+
+        /* Expense Row Item */
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .transaction-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+            border: 1px solid var(--border-light);
+        }
+
+        .tx-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tx-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(112, 66, 248, 0.1);
+            color: var(--accent-purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .tx-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tx-title {
+            font-size: 0.95em;
+            font-weight: 700;
+        }
+
+        .tx-date {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .tx-right {
+            text-align: right;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tx-amount {
+            font-size: 0.95em;
+            font-weight: 700;
+            color: var(--expense-red);
+        }
+
+        .btn-delete-tx {
+            background: none;
+            border: none;
+            color: var(--expense-red);
+            cursor: pointer;
+            font-size: 1em;
+            padding: 6px;
+            border-radius: 8px;
+        }
+
+        /* Settings UI Components */
+        .settings-group {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-light);
+        }
+
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-label {
+            font-size: 0.95em;
             font-weight: 600;
         }
 
-        .expense-table {
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: var(--accent-purple); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .select-input {
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-color);
+            color: var(--text-dark);
+            font-family: inherit;
+            font-weight: 600;
+        }
+
+        .btn-save-block {
             width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-
-        .expense-table th {
-            background-color: #f0f4f1;
-            color: #444;
-            text-align: left;
-            padding: 8px 6px;
-            font-size: 13px;
-            border-bottom: 2px solid var(--border);
-        }
-
-        .expense-table td {
-            padding: 6px 4px;
-            border-bottom: 1px solid var(--border);
-            vertical-align: middle;
-        }
-
-        .row-num {
-            font-weight: bold;
-            color: #777;
-            width: 25px;
-            text-align: center;
-            font-size: 13px;
-        }
-
-        .expense-table input[type="date"] {
-            width: 100%;
-            padding: 6px 4px;
-            font-size: 13px;
-        }
-
-        .expense-table input[type="text"] {
-            width: 100%;
-            padding: 6px 8px;
-            font-size: 14px;
-        }
-
-        .expense-amount {
-            text-align: right;
-            width: 100%;
-            padding: 6px 4px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        .btn {
-            background-color: var(--primary);
+            background: var(--accent-purple);
             color: white;
             border: none;
-            padding: 10px 16px;
-            border-radius: 6px;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 700;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            flex: 1;
-            text-align: center;
-            min-width: 120px;
+            font-size: 1em;
+            transition: background 0.2s;
         }
 
-        .btn:active {
-            opacity: 0.8;
-        }
-
-        .btn-outline {
-            background-color: transparent;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-        }
-
-        .btn-danger {
-            background-color: transparent;
-            color: var(--danger);
-            border: 1px solid var(--danger);
-            flex: 0 0 100%;
-            margin-top: 5px;
-        }
-
-        .status-msg {
-            font-size: 13px;
-            color: var(--primary);
-            font-weight: bold;
-            text-align: center;
-            width: 100%;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .grand-total-card {
-            background: #1b5e20;
+        /* Floating Action Button (FAB) */
+        .fab {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7042f8 0%, #4a21cb 100%);
             color: white;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
+            border: none;
+            box-shadow: 0 8px 20px rgba(112, 66, 248, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 10;
         }
 
-        .grand-total-card h2 {
-            margin: 0 0 5px 0;
-            font-size: 16px;
-            font-weight: 400;
+        /* Bottom Nav Bar */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 5;
         }
 
-        .grand-total-card .amount {
-            font-size: 26px;
-            font-weight: bold;
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: color 0.2s ease;
         }
 
-        @media (min-width: 600px) {
-            body {
-                padding: 20px;
-            }
-            .container {
-                padding: 25px;
-            }
-            h1 {
-                font-size: 28px;
-            }
-            .summary-row {
-                font-size: 16px;
-            }
-            .btn-danger {
-                flex: initial;
-                margin-top: 0;
-                margin-left: auto;
-            }
-            .expense-table th, .expense-table td {
-                padding: 10px 8px;
-            }
-            .expense-table input[type="date"],
-            .expense-table input[type="text"],
-            .expense-amount {
-                padding: 8px 10px;
-                font-size: 14px;
-            }
+        .nav-item.active {
+            color: var(--accent-purple);
+        }
+
+        /* Add Expense Modal */
+        .modal {
+            display: none;
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 20;
+            align-items: flex-end;
+        }
+
+        .modal.open { display: flex; }
+
+        .modal-content {
+            background: var(--card-bg);
+            width: 100%;
+            border-top-left-radius: 28px;
+            border-top-right-radius: 28px;
+            padding: 24px;
+            animation: slideUp 0.25s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-title { font-size: 1.2em; font-weight: 700; }
+
+        .form-control { margin-bottom: 14px; }
+
+        .form-control label {
+            display: block;
+            font-size: 0.8em;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .form-control input, .form-control select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-color);
+            color: var(--text-dark);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 0.95em;
+            font-weight: 600;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--accent-purple);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
         }
     </style>
 </head>
-<body>
+<body class="font-md">
 
-<div class="container">
-    <header>
-        <h1>Pig Capital</h1>
-        
-        <div class="summary-card">
-            <!-- Group 1 -->
-            <div class="summary-row">
-                <div class="capital-inputs">
-                    <input type="number" id="group1-qty" class="qty-input" value="7" min="0" oninput="onInputChange()">
-                    <span>heads @ ₱</span>
-                    <input type="number" id="group1-price" class="price-input" value="5000" min="0" step="100" oninput="onInputChange()">
-                </div>
-                <span id="group1-total">₱35,000.00</span>
-            </div>
-
-            <!-- Group 2 -->
-            <div class="summary-row">
-                <div class="capital-inputs">
-                    <input type="number" id="group2-qty" class="qty-input" value="5" min="0" oninput="onInputChange()">
-                    <span>heads @ ₱</span>
-                    <input type="number" id="group2-price" class="price-input" value="5500" min="0" step="100" oninput="onInputChange()">
-                </div>
-                <span id="group2-total">₱27,500.00</span>
-            </div>
-
-            <!-- Total Capital -->
-            <div class="summary-row total">
-                <span>Initial Capital:</span>
-                <span id="initial-capital">₱62,500.00</span>
-            </div>
+<div class="app-container">
+    <!-- Header Hero Section -->
+    <div class="header">
+        <div class="header-top">
+            <h1 class="greeting">Pig Capital Tracker</h1>
+            <button class="icon-btn" onclick="exportWordDoc()" title="Convert to Word">📥</button>
         </div>
-    </header>
-
-    <div class="section-title">Weekly Food & Feed Expenses</div>
-    
-    <table class="expense-table">
-        <thead>
-            <tr>
-                <th style="width: 8%;">#</th>
-                <th style="width: 32%;">Date</th>
-                <th style="width: 35%;">Description</th>
-                <th style="width: 25%; text-align: right;">Amount (₱)</th>
-            </tr>
-        </thead>
-        <tbody id="expense-body">
-            <!-- Dynamic Rows -->
-        </tbody>
-    </table>
-
-    <div class="action-buttons">
-        <button class="btn" onclick="saveData(true)">💾 Save</button>
-        <button class="btn btn-outline" onclick="addExpenseRow()">+ Add Row</button>
-        <button class="btn btn-outline" onclick="exportData()">📤 Export Backup</button>
-        <button class="btn btn-outline" onclick="triggerImport()">📥 Import Backup</button>
-        <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importData(event)">
-        <button class="btn btn-danger" onclick="resetData()">🗑️ Clear All Data</button>
-        <span id="status-msg" class="status-msg">Changes Saved Successfully!</span>
+        <div class="balance-label">Total Capital & Expenses</div>
+        <div class="balance-amount" id="grand-total">₱62,500.00</div>
     </div>
 
-    <div class="grand-total-card">
-        <h2>Total Overall Capital & Expenses</h2>
-        <div class="amount" id="grand-total">₱62,500.00</div>
+    <!-- TAB 1: HOME DASHBOARD -->
+    <div class="tab-content active" id="tab-home">
+        <!-- Overview Stat Card -->
+        <div class="stat-card">
+            <div class="stat-item">
+                <div class="stat-title"><span class="text-green">↗</span> Initial Capital</div>
+                <div class="stat-value text-green" id="initial-capital-display">₱62,500.00</div>
+            </div>
+            <div class="stat-item right">
+                <div class="stat-title"><span class="text-red">↘</span> Expenses</div>
+                <div class="stat-value text-red" id="total-expenses-display">₱0.00</div>
+            </div>
+        </div>
+
+        <!-- Initial Pig Capital Config Accordion -->
+        <div class="capital-card">
+            <div class="capital-header" onclick="toggleCapitalSetup()">
+                <span>⚙️ Configure Pig Heads Capital</span>
+                <span id="capital-arrow">▼</span>
+            </div>
+            <div class="capital-body" id="capital-body">
+                <div class="input-group">
+                    <input type="number" id="g1-qty" class="input-qty" value="7" oninput="updateCapital()">
+                    <span>heads @</span>
+                    <input type="number" id="g1-price" class="input-price" value="5000" oninput="updateCapital()">
+                    <span style="margin-left:auto; font-weight:700;" id="g1-total">₱35,000</span>
+                </div>
+                <div class="input-group">
+                    <input type="number" id="g2-qty" class="input-qty" value="5" oninput="updateCapital()">
+                    <span>heads @</span>
+                    <input type="number" id="g2-price" class="input-price" value="5500" oninput="updateCapital()">
+                    <span style="margin-left:auto; font-weight:700;" id="g2-total">₱27,500</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Tags -->
+        <div class="categories">
+            <div class="tag active" onclick="filterCategory('All', this)">⚡ All</div>
+            <div class="tag" onclick="filterCategory('Feeds', this)">🌽 Feeds</div>
+            <div class="tag" onclick="filterCategory('Medicine', this)">💊 Medicine</div>
+            <div class="tag" onclick="filterCategory('Utilities', this)">💡 Utilities</div>
+            <div class="tag" onclick="filterCategory('Others', this)">📦 Others</div>
+        </div>
+
+        <!-- Transactions Section -->
+        <div class="section-header">
+            <span class="section-title">Latest Transactions</span>
+        </div>
+
+        <div class="transaction-list" id="transaction-list">
+            <!-- Dynamic Cards -->
+        </div>
+    </div>
+
+    <!-- TAB 2: SETTINGS -->
+    <div class="tab-content" id="tab-settings">
+        <div class="section-header">
+            <span class="section-title">App Settings</span>
+        </div>
+
+        <div class="settings-group">
+            <div class="settings-item">
+                <span class="settings-label">Dark / Light Mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="theme-toggle" onchange="toggleTheme(this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="settings-item">
+                <span class="settings-label">Font Size</span>
+                <select class="select-input" id="font-select" onchange="changeFontSize(this.value)">
+                    <option value="font-sm">Small</option>
+                    <option value="font-md" selected>Medium</option>
+                    <option value="font-lg">Large</option>
+                </select>
+            </div>
+            <div class="settings-item">
+                <span class="settings-label">Currency Option</span>
+                <select class="select-input" id="currency-select" onchange="changeCurrency(this.value)">
+                    <option value="₱" selected>PHP (₱)</option>
+                    <option value="$">USD ($)</option>
+                    <option value="€">EUR (€)</option>
+                    <option value="¥">JPY (¥)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Manual Backup Save Button -->
+        <div class="settings-group">
+            <button class="btn-save-block" onclick="manualSave()">💾 Save Data Now</button>
+        </div>
+
+        <!-- Dedicated Delete Expense Tab/Section -->
+        <div class="section-header">
+            <span class="section-title">Delete Expense Manager</span>
+        </div>
+        <div class="settings-group">
+            <div id="delete-tab-list" class="transaction-list">
+                <!-- Delete Manager Items -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab" onclick="openModal()">+</button>
+
+    <!-- Bottom Navigation Bar (Home, Download, Settings) -->
+    <div class="bottom-nav">
+        <button class="nav-item active" id="nav-home" onclick="switchTab('home')">🏠</button>
+        <button class="nav-item" id="nav-download" onclick="exportWordDoc()">📥</button>
+        <div style="width: 40px;"></div> <!-- Spacer for FAB -->
+        <button class="nav-item" id="nav-settings" onclick="switchTab('settings')">⚙️</button>
+    </div>
+
+    <!-- Add Expense Modal -->
+    <div class="modal" id="expense-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Add New Expense</span>
+                <button class="icon-btn" style="color:#333; background:#eee;" onclick="closeModal()">✕</button>
+            </div>
+            <div class="form-control">
+                <label>Date</label>
+                <input type="date" id="modal-date">
+            </div>
+            <div class="form-control">
+                <label>Category</label>
+                <select id="modal-category">
+                    <option value="Feeds">🌽 Feeds</option>
+                    <option value="Medicine">💊 Medicine</option>
+                    <option value="Utilities">💡 Utilities</option>
+                    <option value="Others">📦 Others</option>
+                </select>
+            </div>
+            <div class="form-control">
+                <label>Description</label>
+                <input type="text" id="modal-label" placeholder="e.g. Starter Feeds Bag">
+            </div>
+            <div class="form-control">
+                <label>Amount</label>
+                <input type="number" id="modal-amount" placeholder="0.00" step="any">
+            </div>
+            <button class="btn-submit" onclick="addExpenseFromModal()">Save Expense</button>
+        </div>
     </div>
 </div>
 
 <script>
-    let rowCount = 0;
-    let currentInitialCapital = 62500;
+    let expenses = [];
+    let activeFilter = 'All';
+    let currentCurrency = '₱';
+
+    const categoryIcons = {
+        'Feeds': '🌽',
+        'Medicine': '💊',
+        'Utilities': '💡',
+        'Others': '📦'
+    };
 
     function formatCurrency(amount) {
-        return '₱' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return currentCurrency + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    function calculateInitialCapital() {
-        const g1Qty = parseFloat(document.getElementById('group1-qty').value) || 0;
-        const g1Price = parseFloat(document.getElementById('group1-price').value) || 0;
-        const g2Qty = parseFloat(document.getElementById('group2-qty').value) || 0;
-        const g2Price = parseFloat(document.getElementById('group2-price').value) || 0;
+    /* Tab Switching Logic */
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+        if (tabName === 'home') {
+            document.getElementById('tab-home').classList.add('active');
+            document.getElementById('nav-home').classList.add('active');
+        } else if (tabName === 'settings') {
+            document.getElementById('tab-settings').classList.add('active');
+            document.getElementById('nav-settings').classList.add('active');
+            renderDeleteTabList();
+        }
+    }
+
+    /* Settings & Auto-Save Logic */
+    function toggleTheme(isDark) {
+        if (isDark) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+        localStorage.setItem('pig_app_darkmode', isDark);
+    }
+
+    function changeFontSize(sizeClass) {
+        document.body.classList.remove('font-sm', 'font-md', 'font-lg');
+        document.body.classList.add(sizeClass);
+        localStorage.setItem('pig_app_fontsize', sizeClass);
+    }
+
+    function changeCurrency(symbol) {
+        currentCurrency = symbol;
+        localStorage.setItem('pig_app_currency', symbol);
+        render();
+        renderDeleteTabList();
+    }
+
+    function manualSave() {
+        saveCapitalData();
+        saveExpenseData();
+        alert('All data successfully saved!');
+    }
+
+    /* Convert & Download as Word Printable File */
+    function exportWordDoc() {
+        const initialCapital = getInitialCapital();
+        const overallExpenses = expenses.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+        const grandTotal = initialCapital + overallExpenses;
+
+        let rowsHtml = '';
+        expenses.forEach((exp, i) => {
+            rowsHtml += `
+                <tr>
+                    <td style="border:1px solid #ccc; padding:8px;">${i + 1}</td>
+                    <td style="border:1px solid #ccc; padding:8px;">${exp.date || '-'}</td>
+                    <td style="border:1px solid #ccc; padding:8px;">${exp.category || 'General'}</td>
+                    <td style="border:1px solid #ccc; padding:8px;">${exp.label || '-'}</td>
+                    <td style="border:1px solid #ccc; padding:8px; text-align:right;">${formatCurrency(exp.amount)}</td>
+                </tr>
+            `;
+        });
+
+        const docContent = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head><title>Pig Capital & Expense Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                h1 { color: #4a21cb; }
+                table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                th { background: #6336e4; color: white; border: 1px solid #ccc; padding: 8px; text-align: left; }
+                .summary { background: #f0ebff; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+            </style>
+            </head>
+            <body>
+                <h1>Pig Capital & Expense Report</h1>
+                <p>Generated Date: ${new Date().toLocaleDateString()}</p>
+
+                <div class="summary">
+                    <p><strong>Initial Pig Capital:</strong> ${formatCurrency(initialCapital)}</p>
+                    <p><strong>Total Expenses:</strong> ${formatCurrency(overallExpenses)}</p>
+                    <p><strong>Grand Total Investment:</strong> ${formatCurrency(grandTotal)}</p>
+                </div>
+
+                <h2>Expense Details</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th style="text-align:right;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml || '<tr><td colspan="5" style="border:1px solid #ccc; padding:8px; text-align:center;">No expenses recorded</td></tr>'}
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `;
+
+        const blob = new Blob(['\ufeff' + docContent], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Pig_Expense_Report_${new Date().toISOString().slice(0,10)}.doc`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    /* Capital Config */
+    function toggleCapitalSetup() {
+        const body = document.getElementById('capital-body');
+        const arrow = document.getElementById('capital-arrow');
+        body.classList.toggle('open');
+        arrow.innerText = body.classList.contains('open') ? '▲' : '▼';
+    }
+
+    function getInitialCapital() {
+        const g1Qty = parseFloat(document.getElementById('g1-qty').value) || 0;
+        const g1Price = parseFloat(document.getElementById('g1-price').value) || 0;
+        const g2Qty = parseFloat(document.getElementById('g2-qty').value) || 0;
+        const g2Price = parseFloat(document.getElementById('g2-price').value) || 0;
 
         const g1Total = g1Qty * g1Price;
         const g2Total = g2Qty * g2Price;
 
-        document.getElementById('group1-total').innerText = formatCurrency(g1Total);
-        document.getElementById('group2-total').innerText = formatCurrency(g2Total);
+        document.getElementById('g1-total').innerText = formatCurrency(g1Total);
+        document.getElementById('g2-total').innerText = formatCurrency(g2Total);
 
-        currentInitialCapital = g1Total + g2Total;
-        document.getElementById('initial-capital').innerText = formatCurrency(currentInitialCapital);
+        return g1Total + g2Total;
     }
 
-    function createExpenseRow(dateVal = '', labelVal = '', amountVal = '') {
-        rowCount++;
-        const tr = document.createElement('tr');
-        tr.id = `row-${rowCount}`;
-        const defaultLabel = labelVal !== '' ? labelVal : `Week ${rowCount} Food`;
-
-        tr.innerHTML = `
-            <td class="row-num">${rowCount}</td>
-            <td><input type="date" id="date-${rowCount}" value="${dateVal}" onchange="onInputChange()"></td>
-            <td><input type="text" id="label-${rowCount}" value="${defaultLabel}" placeholder="Feed type" oninput="onInputChange()"></td>
-            <td><input type="number" id="amount-${rowCount}" class="expense-amount" value="${amountVal}" placeholder="0.00" min="0" step="any" oninput="onInputChange()"></td>
-        `;
-        return tr;
+    function updateCapital() {
+        saveCapitalData();
+        render();
     }
 
-    function onInputChange() {
-        calculateInitialCapital();
-        calculateGrandTotal();
-        saveData(false);
-    }
+    /* Dashboard Rendering */
+    function render() {
+        const initialCapital = getInitialCapital();
+        const listContainer = document.getElementById('transaction-list');
+        listContainer.innerHTML = '';
 
-    function addExpenseRow() {
-        const tbody = document.getElementById('expense-body');
-        tbody.appendChild(createExpenseRow());
-        calculateGrandTotal();
-        saveData(false);
-    }
+        const filtered = activeFilter === 'All' ? expenses : expenses.filter(e => e.category === activeFilter);
 
-    function calculateGrandTotal() {
-        const inputs = document.querySelectorAll('.expense-amount');
-        let totalExpenses = 0;
-
-        inputs.forEach(input => {
-            const val = parseFloat(input.value);
-            if (!isNaN(val) && val > 0) {
-                totalExpenses += val;
-            }
+        filtered.forEach((exp) => {
+            const amount = parseFloat(exp.amount) || 0;
+            const icon = categoryIcons[exp.category] || '💸';
+            const card = document.createElement('div');
+            card.className = 'transaction-card';
+            card.innerHTML = `
+                <div class="tx-left">
+                    <div class="tx-icon">${icon}</div>
+                    <div class="tx-details">
+                        <span class="tx-title">${exp.label || 'Expense'}</span>
+                        <span class="tx-date">${exp.date || 'No Date'} • ${exp.category || 'General'}</span>
+                    </div>
+                </div>
+                <div class="tx-right">
+                    <span class="tx-amount">- ${formatCurrency(amount)}</span>
+                </div>
+            `;
+            listContainer.appendChild(card);
         });
 
-        const grandTotal = currentInitialCapital + totalExpenses;
-        document.getElementById('grand-total').innerText = formatCurrency(grandTotal);
+        const overallExpenses = expenses.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+
+        document.getElementById('initial-capital-display').innerText = formatCurrency(initialCapital);
+        document.getElementById('total-expenses-display').innerText = formatCurrency(overallExpenses);
+        document.getElementById('grand-total').innerText = formatCurrency(initialCapital + overallExpenses);
     }
 
-    function saveData(showNotification = false) {
-        const capitalData = {
-            g1Qty: document.getElementById('group1-qty').value,
-            g1Price: document.getElementById('group1-price').value,
-            g2Qty: document.getElementById('group2-qty').value,
-            g2Price: document.getElementById('group2-price').value
-        };
-        localStorage.setItem('pig_capital_data', JSON.stringify(capitalData));
+    /* Render Delete Expense Manager in Settings */
+    function renderDeleteTabList() {
+        const container = document.getElementById('delete-tab-list');
+        container.innerHTML = '';
 
-        const rowsData = [];
-        for (let i = 1; i <= rowCount; i++) {
-            const dateEl = document.getElementById(`date-${i}`);
-            const labelEl = document.getElementById(`label-${i}`);
-            const amountEl = document.getElementById(`amount-${i}`);
-
-            if (dateEl && labelEl && amountEl) {
-                rowsData.push({
-                    date: dateEl.value,
-                    label: labelEl.value,
-                    amount: amountEl.value
-                });
-            }
+        if (expenses.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:0.9em; padding:10px;">No expenses available to delete.</div>';
+            return;
         }
-        localStorage.setItem('pig_tracker_data', JSON.stringify(rowsData));
 
-        if (showNotification) {
-            const msg = document.getElementById('status-msg');
-            msg.style.opacity = '1';
-            setTimeout(() => { msg.style.opacity = '0'; }, 2000);
+        expenses.forEach(exp => {
+            const card = document.createElement('div');
+            card.className = 'transaction-card';
+            card.innerHTML = `
+                <div class="tx-left">
+                    <div class="tx-details">
+                        <span class="tx-title">${exp.label || 'Expense'}</span>
+                        <span class="tx-date">${exp.date} • ${exp.category}</span>
+                    </div>
+                </div>
+                <div class="tx-right">
+                    <span class="tx-amount">- ${formatCurrency(exp.amount)}</span>
+                    <button class="btn-delete-tx" onclick="deleteExpense(${exp.id})" title="Delete Expense">🗑️</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function deleteExpense(id) {
+        expenses = expenses.filter(e => e.id !== id);
+        saveExpenseData();
+        render();
+        renderDeleteTabList();
+    }
+
+    /* Modal Controls */
+    function openModal() {
+        document.getElementById('modal-date').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('modal-label').value = '';
+        document.getElementById('modal-amount').value = '';
+        document.getElementById('expense-modal').classList.add('open');
+    }
+
+    function closeModal() {
+        document.getElementById('expense-modal').classList.remove('open');
+    }
+
+    function addExpenseFromModal() {
+        const date = document.getElementById('modal-date').value;
+        const category = document.getElementById('modal-category').value;
+        const label = document.getElementById('modal-label').value;
+        const amount = document.getElementById('modal-amount').value;
+
+        if (!amount || amount <= 0) {
+            alert('Please enter a valid amount.');
+            return;
         }
+
+        expenses.unshift({
+            id: Date.now(),
+            date,
+            category,
+            label: label || `${category} Purchase`,
+            amount
+        });
+
+        saveExpenseData();
+        render();
+        closeModal();
     }
 
-    function exportData() {
-        const backup = {
-            capital: localStorage.getItem('pig_capital_data'),
-            tracker: localStorage.getItem('pig_tracker_data')
+    function filterCategory(cat, el) {
+        activeFilter = cat;
+        document.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        render();
+    }
+
+    /* Local Storage Management */
+    function saveCapitalData() {
+        const capital = {
+            g1Qty: document.getElementById('g1-qty').value,
+            g1Price: document.getElementById('g1-price').value,
+            g2Qty: document.getElementById('g2-qty').value,
+            g2Price: document.getElementById('g2-price').value
         };
-        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `pig-tracker-backup-${new Date().toISOString().slice(0,10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
+        localStorage.setItem('pig_mobile_capital', JSON.stringify(capital));
     }
 
-    function triggerImport() {
-        document.getElementById('import-file').click();
-    }
-
-    function importData(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const backup = JSON.parse(e.target.result);
-                if (backup.capital) localStorage.setItem('pig_capital_data', backup.capital);
-                if (backup.tracker) localStorage.setItem('pig_tracker_data', backup.tracker);
-                alert('Data restored successfully!');
-                loadData();
-            } catch (err) {
-                alert('Invalid backup file!');
-            }
-        };
-        reader.readAsText(file);
+    function saveExpenseData() {
+        localStorage.setItem('pig_mobile_expenses', JSON.stringify(expenses));
     }
 
     function loadData() {
-        const savedCapital = localStorage.getItem('pig_capital_data');
-        if (savedCapital) {
-            const cap = JSON.parse(savedCapital);
-            document.getElementById('group1-qty').value = cap.g1Qty;
-            document.getElementById('group1-price').value = cap.g1Price;
-            document.getElementById('group2-qty').value = cap.g2Qty;
-            document.getElementById('group2-price').value = cap.g2Price;
+        // Load Settings
+        const isDark = localStorage.getItem('pig_app_darkmode') === 'true';
+        document.getElementById('theme-toggle').checked = isDark;
+        toggleTheme(isDark);
+
+        const savedFontSize = localStorage.getItem('pig_app_fontsize') || 'font-md';
+        document.getElementById('font-select').value = savedFontSize;
+        changeFontSize(savedFontSize);
+
+        const savedCurrency = localStorage.getItem('pig_app_currency') || '₱';
+        document.getElementById('currency-select').value = savedCurrency;
+        currentCurrency = savedCurrency;
+
+        // Load Capital Setup
+        const capData = localStorage.getItem('pig_mobile_capital');
+        if (capData) {
+            const cap = JSON.parse(capData);
+            document.getElementById('g1-qty').value = cap.g1Qty;
+            document.getElementById('g1-price').value = cap.g1Price;
+            document.getElementById('g2-qty').value = cap.g2Qty;
+            document.getElementById('g2-price').value = cap.g2Price;
         }
 
-        calculateInitialCapital();
-
-        const tbody = document.getElementById('expense-body');
-        tbody.innerHTML = '';
-        rowCount = 0;
-
-        const savedData = localStorage.getItem('pig_tracker_data');
-        if (savedData) {
-            const parsedData = JSON.parse(savedData);
-            if (parsedData.length > 0) {
-                parsedData.forEach(item => {
-                    tbody.appendChild(createExpenseRow(item.date, item.label, item.amount));
-                });
-            } else {
-                initDefaultRows(tbody);
-            }
+        // Load Expense List
+        const expData = localStorage.getItem('pig_mobile_expenses');
+        if (expData) {
+            expenses = JSON.parse(expData);
         } else {
-            initDefaultRows(tbody);
+            expenses = [
+                { id: 1, date: new Date().toISOString().slice(0,10), category: 'Feeds', label: 'Starter Feeds 1 Bag', amount: '1850' },
+                { id: 2, date: new Date().toISOString().slice(0,10), category: 'Medicine', label: 'Vitamins & Iron Injections', amount: '650' }
+            ];
+            saveExpenseData();
         }
-
-        calculateGrandTotal();
-    }
-
-    function initDefaultRows(tbody) {
-        for (let i = 1; i <= 10; i++) {
-            tbody.appendChild(createExpenseRow());
-        }
-    }
-
-    function resetData() {
-        if (confirm('Clear all data and reset to default?')) {
-            localStorage.removeItem('pig_tracker_data');
-            localStorage.removeItem('pig_capital_data');
-            document.getElementById('group1-qty').value = 7;
-            document.getElementById('group1-price').value = 5000;
-            document.getElementById('group2-qty').value = 5;
-            document.getElementById('group2-price').value = 5500;
-            loadData();
-        }
+        render();
     }
 
     window.onload = loadData;
